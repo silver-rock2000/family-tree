@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Tree Editor</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- jsPlumb library for connections -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.6/js/jsplumb.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Edit Family Tree</h1>
+        <nav>
+            <a href="index.html">View Tree</a>
+            <a href="edit.html" class="active">Edit Tree</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="sidebar">
+            <h2>Add New Person</h2>
+            <form id="addPersonForm">
+                <div class="form-group">
+                    <label for="personName">Name:</label>
+                    <input type="text" id="personName" required>
+                </div>
+                <div class="form-group">
+                    <label for="birthYear">Birth Year:</label>
+                    <input type="number" id="birthYear">
+                </div>
+                <div class="form-group">
+                    <label for="deathYear">Death Year:</label>
+                    <input type="number" id="deathYear">
+                </div>
+                <div class="form-group">
+                    <label for="notes">Notes/Stories:</label>
+                    <textarea id="notes"></textarea>
+                </div>
+                <button type="submit">Add Person</button>
+            </form>
+
+            <h2>Create Relationship</h2>
+            <form id="addRelationForm">
+                <div class="form-group">
+                    <label for="person1">Person 1:</label>
+                    <select id="person1" required>
+                        <option value="">Select a person</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="relationType">Relationship:</label>
+                    <select id="relationType" required>
+                        <option value="parent">Parent of</option>
+                        <option value="child">Child of</option>
+                        <option value="spouse">Spouse of</option>
+                        <option value="sibling">Sibling of</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="person2">Person 2:</label>
+                    <select id="person2" required>
+                        <option value="">Select a person</option>
+                    </select>
+                </div>
+                <button type="submit">Create Relationship</button>
+            </form>
+
+            <div class="controls">
+                <button id="saveData">Save to Google Sheets</button>
+            </div>
+        </div>
+        
+        <div id="editContainer">
+            <!-- Family members will be added here dynamically for editing -->
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

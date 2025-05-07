@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Tree Viewer</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- jsPlumb library for connections -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.6/js/jsplumb.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>My Family Tree</h1>
+        <nav>
+            <a href="index.html" class="active">View Tree</a>
+            <a href="edit.html">Edit Tree</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="controls">
+            <button id="zoomIn">Zoom In</button>
+            <button id="zoomOut">Zoom Out</button>
+            <button id="resetView">Reset View</button>
+            <button id="loadData">Load Data</button>
+        </div>
+        
+        <div id="treeContainer">
+            <!-- Family members will be added here dynamically -->
+        </div>
+    </main>
+
+    <div id="personDetails" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalName"></h2>
+            <p id="modalBirth"></p>
+            <p id="modalDeath"></p>
+            <p id="modalNotes"></p>
+            <h3>Relationships:</h3>
+            <ul id="modalRelations"></ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
