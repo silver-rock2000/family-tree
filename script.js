@@ -4,12 +4,23 @@ let familyData = [];
 let scale = 1;
 let isEditPage = window.location.href.includes('edit.html');
 
+// Fix jsPlumb initialization issue
+function fixJsPlumbInitialization() {
+    // JsPlumb sometimes has issues with initialization timing, this helps ensure proper init
+    setTimeout(function() {
+        if (jsPlumbInstance) {
+            jsPlumbInstance.repaintEverything();
+        }
+    }, 500);
+}
+
 // Initialize when DOM is loaded
-document.addEventListener('DOMLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     initializePage();
+    fixJsPlumbInitialization();
 });
 
-// Fallback to window load if DOMLoaded doesn't fire
+// Fallback to window load if DOMContentLoaded doesn't fire
 window.onload = function() {
     initializePage();
 };
@@ -34,8 +45,11 @@ function initializePage() {
         initializeViewPage();
     }
 
-    // Load sample data initially
-    loadSampleData();
+    // Try to load data from localStorage first
+    if (!loadFromLocalStorage()) {
+        // If no saved data exists, load sample data
+        loadSampleData();
+    }
     
     // Set up zoom controls
     setupZoomControls();
@@ -61,9 +75,21 @@ function initializeViewPage() {
     const loadDataBtn = document.getElementById('loadData');
     if (loadDataBtn) {
         loadDataBtn.addEventListener('click', function() {
-            // In a real application, this would load from Google Sheets
-            // For now, we'll just reload sample data
-            loadSampleData();
+            // Try to load from localStorage, or fall back to sample data
+            if (!loadFromLocalStorage()) {
+                loadSampleData();
+                alert('No saved data found. Loaded sample data instead.');
+            } else {
+                alert('Family tree data loaded successfully!');
+            }
+        });
+    }
+    
+    // Set up export JSON button
+    const exportJSONBtn = document.getElementById('exportJSON');
+    if (exportJSONBtn) {
+        exportJSONBtn.addEventListener('click', function() {
+            exportToJSON();
         });
     }
 }
@@ -92,7 +118,23 @@ function initializeEditPage() {
     const saveDataBtn = document.getElementById('saveData');
     if (saveDataBtn) {
         saveDataBtn.addEventListener('click', function() {
-            saveData();
+            saveToLocalStorage();
+        });
+    }
+    
+    // Set up export JSON button
+    const exportJSONBtn = document.getElementById('exportJSON');
+    if (exportJSONBtn) {
+        exportJSONBtn.addEventListener('click', function() {
+            exportToJSON();
+        });
+    }
+    
+    // Set up import JSON button
+    const importJSONInput = document.getElementById('importJSON');
+    if (importJSONInput) {
+        importJSONInput.addEventListener('change', function(event) {
+            importFromJSON(event);
         });
     }
 }
@@ -310,13 +352,170 @@ function updatePersonDropdowns() {
     });
 }
 
-// Save data (for edit page)
-function saveData() {
-    // In a real app, this would save to Google Sheets
-    alert('In a real application, this would save your data to Google Sheets.\n\nFor now, the data is stored temporarily in memory.');
-    
-    // Here's where you would implement the Google Sheets API connection
-    console.log('Data to save:', familyData);
+// Save data to localStorage
+function saveToLocalStorage() {
+    try {
+        // Save the family data
+        localStorage.setItem('familyTreeData', JSON.stringify(familyData));
+        
+        // Also save position data for each person
+        const positions = {};
+        familyData.forEach(person => {
+            const element = document.getElementById(`person-${person.id}`);
+            if (element) {
+                positions[person.id] = {
+                    left: element.style.left,
+                    top: element.style.top
+                };
+            }
+        });
+        
+        localStorage.setItem('familyTreePositions', JSON.stringify(positions));
+        
+        alert('Your family tree has been saved successfully!');
+        return true;
+    } catch (error) {
+        console.error('Error saving to localStorage:', error);
+        alert('There was an error saving your family tree: ' + error.message);
+        return false;
+    }
+}
+
+// Load data from localStorage
+function loadFromLocalStorage() {
+    try {
+        const savedData = localStorage.getItem('familyTreeData');
+        const savedPositions = localStorage.getItem('familyTreePositions');
+        
+        if (!savedData) {
+            return false; // No saved data found
+        }
+        
+        // Load family data
+        familyData = JSON.parse(savedData);
+        
+        // Render the tree
+        renderFamilyTree();
+        
+        // Apply saved positions if available
+        if (savedPositions) {
+            const positions = JSON.parse(savedPositions);
+            Object.keys(positions).forEach(personId => {
+                const element = document.getElementById(`person-${personId}`);
+                if (element) {
+                    element.style.left = positions[personId].left;
+                    element.style.top = positions[personId].top;
+                }
+            });
+        }
+        
+        // Update dropdowns if on edit page
+        if (isEditPage) {
+            updatePersonDropdowns();
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error loading from localStorage:', error);
+        return false;
+    }
+}
+
+// Export data to a downloadable JSON file
+function exportToJSON() {
+    try {
+        // Create positions object
+        const positions = {};
+        familyData.forEach(person => {
+            const element = document.getElementById(`person-${person.id}`);
+            if (element) {
+                positions[person.id] = {
+                    left: element.style.left,
+                    top: element.style.top
+                };
+            }
+        });
+        
+        // Combine data and positions
+        const exportData = {
+            familyData: familyData,
+            positions: positions
+        };
+        
+        // Create and trigger download
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "family_tree.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+        
+        return true;
+    } catch (error) {
+        console.error('Error exporting to JSON:', error);
+        alert('Error exporting data: ' + error.message);
+        return false;
+    }
+}
+
+// Import data from a JSON file
+function importFromJSON(event) {
+    try {
+        const file = event.target.files[0];
+        if (!file) {
+            return false;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                
+                // Check if data has the expected structure
+                if (importedData.familyData && Array.isArray(importedData.familyData)) {
+                    // Update family data
+                    familyData = importedData.familyData;
+                    
+                    // Render the tree
+                    renderFamilyTree();
+                    
+                    // Apply positions if available
+                    if (importedData.positions) {
+                        Object.keys(importedData.positions).forEach(personId => {
+                            const element = document.getElementById(`person-${personId}`);
+                            if (element) {
+                                element.style.left = importedData.positions[personId].left;
+                                element.style.top = importedData.positions[personId].top;
+                            }
+                        });
+                    }
+                    
+                    // Update dropdowns if on edit page
+                    if (isEditPage) {
+                        updatePersonDropdowns();
+                    }
+                    
+                    // Save to localStorage
+                    saveToLocalStorage();
+                    
+                    alert('Family tree data imported successfully!');
+                } else {
+                    alert('Invalid file format. The file does not contain valid family tree data.');
+                }
+            } catch (parseError) {
+                console.error('Error parsing JSON:', parseError);
+                alert('Error parsing file: ' + parseError.message);
+            }
+        };
+        
+        reader.readAsText(file);
+        return true;
+    } catch (error) {
+        console.error('Error importing from JSON:', error);
+        alert('Error importing data: ' + error.message);
+        return false;
+    }
 }
 
 // Set up zoom controls
