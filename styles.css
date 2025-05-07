@@ -92,6 +92,7 @@ main {
 .controls {
     margin-bottom: 1rem;
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
 }
 
@@ -107,6 +108,30 @@ button {
 
 button:hover {
     background-color: #2c445f;
+}
+
+/* Hide file input and use label instead */
+input[type="file"] {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.file-label {
+    padding: 0.5rem 1rem;
+    background-color: #5a7d3a;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: inline-block;
+}
+
+.file-label:hover {
+    background-color: #45602d;
 }
 
 /* Form styling */
